@@ -19,7 +19,28 @@
 
 ## Xray 配置前置要求
 
-请在 Xray 配置中确保开启以下能力（示例）：
+为避免改错配置导致 Xray 无法启动，建议按下面顺序操作。
+
+### 1) 修改前先备份
+
+```bash
+cp /path/to/config.json /path/to/config.backup.json
+```
+
+### 2) 必填项清单（缺一项都可能导致功能不完整）
+
+- 顶层 `stats: {}`
+- 顶层 `policy.system.statsOutboundUplink` 与 `statsOutboundDownlink` 为 `true`
+- 顶层 `api.tag` 和 `api.services`（必须包含 `StatsService`、`ObservatoryService`）
+- 顶层 `observatory.subjectSelector`（必须命中真实 outbound tag，例如 `proxy`）
+- `inbounds` 中新增 `tag: "api"` 的 dokodemo-door 入站（默认 `127.0.0.1:10085`）
+- `outbounds` 中新增 `tag: "api"`（通常用 `freedom`）
+- `routing.rules` 中新增 `inboundTag: ["api"] -> outboundTag: "api"` 规则
+- 顶层 `log.access` / `log.error` 使用绝对路径
+
+### 3) 推荐配置模板（可直接对照）
+
+说明：下面是监控相关字段模板，`outbounds` 里的代理节点配置请保留你自己的原始内容。
 
 ```json
 {
@@ -30,6 +51,12 @@
     "dnsLog": false
   },
   "stats": {},
+  "policy": {
+    "system": {
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    }
+  },
   "api": {
     "tag": "api",
     "services": ["StatsService", "ObservatoryService"]
@@ -49,14 +76,43 @@
         "address": "127.0.0.1"
       }
     }
-  ]
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "api"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": ["api"],
+        "outboundTag": "api"
+      }
+    ]
+  }
 }
 ```
 
-说明：
-- `subjectSelector` 要与监控目标出站 `tag` 对应（默认 `proxy`）
-- 日志路径建议放在 `~/.xray/`，便于权限管理
-- 首次使用请手动创建日志目录：`mkdir -p /Users/yourname/.xray`
+### 4) 启动前自检（强烈建议）
+
+```bash
+xray run -test -config /path/to/config.json
+```
+
+看到 `Configuration OK.` 再重启 Xray。
+
+### 5) 常见错误对照
+
+| 现象 | 常见原因 | 处理方式 |
+| --- | --- | --- |
+| Xray 启动失败，提示 JSON 解析错误 | 配置里带注释、缺逗号、括号不匹配 | 用严格 JSON，先 `xray run -test` |
+| 启动失败，提示找不到 `api` outbound | 加了 `routing` 的 `outboundTag: "api"`，但没加 `outbounds` 的 `tag: "api"` | 在 `outbounds` 新增 `{"protocol":"freedom","tag":"api"}` |
+| `xray-stat` 显示 API 连接超时 | API inbound 未监听 `127.0.0.1:10085` 或端口冲突 | 检查 `inbounds` 的 `api` 配置和端口占用 |
+| 有连接但没有流量统计 | 少了 `policy.system.statsOutbound*` 或 `stats` | 补齐 `policy.system` 和 `stats: {}` |
+| 有流量但没有延迟 | `subjectSelector` 与真实 outbound tag 不一致 | 改成真实 tag，例如 `proxy` |
+| 没有日志显示 | 日志路径错误、目录未创建或权限不足 | 执行 `mkdir -p /Users/yourname/.xray`，检查路径与权限 |
 
 ## 快速开始
 
