@@ -179,14 +179,14 @@ go build -o xray-stat .
 
 ```text
 .
-├── main.go
-├── go.mod
-├── internal
-│   ├── config      # 参数解析与校验
-│   ├── xrayapi     # StatsService / ObservatoryService 客户端
-│   ├── logs        # 日志跟随与轮转/截断处理
-│   └── ui          # 终端仪表盘渲染
-└── README.md
+|- main.go
+|- go.mod
+|- internal
+|  |- config      # 参数解析与校验
+|  |- xrayapi     # StatsService / ObservatoryService 客户端
+|  |- logs        # 日志跟随与轮转/截断处理
+|  `- ui          # 终端仪表盘渲染
+`- README.md
 ```
 
 ## 说明

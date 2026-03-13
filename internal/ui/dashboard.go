@@ -62,10 +62,10 @@ func (d *Dashboard) Render(snapshot xrayapi.Snapshot) {
 	b.WriteString(fmt.Sprintf("%sTag:%s %s   %sAPI:%s %s   %s刷新:%s %s\n",
 		bold, reset, d.tag, bold, reset, d.addr, bold, reset, snapshot.Timestamp.Format("2006-01-02 15:04:05")))
 
-	statusText := "❌ 断开"
+	statusText := "DOWN"
 	statusColor := red
 	if snapshot.Connected {
-		statusText = "✅ 正常"
+		statusText = "OK"
 		statusColor = green
 	}
 	latencyText := "N/A"
@@ -77,9 +77,9 @@ func (d *Dashboard) Render(snapshot xrayapi.Snapshot) {
 	b.WriteString(fmt.Sprintf("%s状态%s 连接: %s%s%s   延迟: %s%s%s\n",
 		bold, reset, statusColor, statusText, reset, cyan, latencyText, reset))
 
-	b.WriteString(fmt.Sprintf("%s流量%s 实时 ↑ %s/s   ↓ %s/s\n",
+	b.WriteString(fmt.Sprintf("%s流量%s 实时 UP %s/s   DOWN %s/s\n",
 		bold, reset, formatBytes(snapshot.UpRate), formatBytes(snapshot.DownRate)))
-	b.WriteString(fmt.Sprintf("     累计 ↑ %s   ↓ %s\n",
+	b.WriteString(fmt.Sprintf("     累计 UP %s   DOWN %s\n",
 		formatBytes(float64(snapshot.TotalUp)), formatBytes(float64(snapshot.TotalDown))))
 
 	if snapshot.APIError != nil {
@@ -88,7 +88,7 @@ func (d *Dashboard) Render(snapshot xrayapi.Snapshot) {
 
 	b.WriteString("\n")
 	b.WriteString(fmt.Sprintf("%s日志%s 模式=%s (Ctrl+C 退出)\n", bold, reset, d.logMode))
-	b.WriteString(strings.Repeat("─", 64))
+	b.WriteString(strings.Repeat("-", 64))
 	b.WriteString("\n")
 
 	if len(displayLogs) == 0 {
