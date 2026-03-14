@@ -122,6 +122,26 @@ mkdir -p /Users/yourname/.xray
 go run . 
 ```
 
+## 一键安装
+
+直接安装最新 release：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/adfoke/xray-stat/main/scripts/install.sh | sh
+```
+
+指定版本安装：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/adfoke/xray-stat/main/scripts/install.sh | VERSION=v0.1.1 sh
+```
+
+默认会安装到可用的 `bin` 目录；如果需要自定义目录：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/adfoke/xray-stat/main/scripts/install.sh | INSTALL_DIR="$HOME/.local/bin" sh
+```
+
 自定义示例：
 
 ```bash
