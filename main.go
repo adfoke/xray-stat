@@ -39,6 +39,11 @@ func main() {
 	if logFollower != nil {
 		go logFollower.Run(ctx, logCh)
 	}
+	inputCh, restoreInput, err := ui.StartInput(ctx)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "输入初始化警告: %v\n", err)
+	}
+	defer restoreInput()
 
 	// 首屏立即渲染一次。
 	snapshot := monitor.Snapshot(ctx)
@@ -51,10 +56,32 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
+			restoreInput()
 			_, _ = fmt.Fprint(os.Stdout, "\033[0m\n")
 			return
 		case entry := <-logCh:
 			dashboard.PushLog(entry)
+		case action, ok := <-inputCh:
+			if !ok {
+				inputCh = nil
+				continue
+			}
+			switch action {
+			case ui.ActionScrollOlder:
+				dashboard.ScrollOlder(1)
+			case ui.ActionScrollNewer:
+				dashboard.ScrollNewer(1)
+			case ui.ActionPageOlder:
+				dashboard.ScrollOlder(dashboard.PageSize())
+			case ui.ActionPageNewer:
+				dashboard.ScrollNewer(dashboard.PageSize())
+			case ui.ActionToNewest:
+				dashboard.ScrollToNewest()
+			case ui.ActionToOldest:
+				dashboard.ScrollToOldest()
+			}
+			drainLogs(logCh, dashboard)
+			dashboard.Render(snapshot)
 		case <-ticker.C:
 			snapshot = monitor.Snapshot(ctx)
 			drainLogs(logCh, dashboard)

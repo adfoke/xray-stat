@@ -5,19 +5,16 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 OUTPUT_DIR=${OUTPUT_DIR:-"$ROOT_DIR/dist"}
 BINARY_NAME=${BINARY_NAME:-xray-stat}
-GOOS_VALUE=${GOOS_VALUE:-$(go env GOOS)}
-GOARCH_VALUE=${GOARCH_VALUE:-$(go env GOARCH)}
 GOCACHE_DIR=${GOCACHE_DIR:-"$ROOT_DIR/.cache/go-build"}
 GOMODCACHE_DIR=${GOMODCACHE_DIR:-"$ROOT_DIR/.cache/go-mod"}
+GOOS_VALUE=darwin
+GOARCH_VALUE=arm64
 
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$GOCACHE_DIR"
 mkdir -p "$GOMODCACHE_DIR"
 
 OUTPUT_PATH="$OUTPUT_DIR/$BINARY_NAME"
-if [ "$GOOS_VALUE" = "windows" ]; then
-	OUTPUT_PATH="${OUTPUT_PATH}.exe"
-fi
 
 echo "Building $OUTPUT_PATH"
 
