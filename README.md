@@ -31,6 +31,105 @@
 - 一条把 `inboundTag: ["api"]` 指到 `outboundTag: "api"` 的路由
 - `log.access` 和 `log.error` 用绝对路径
 
+完整示例：
+
+`outbounds` 里的代理节点按你自己的来。下面用 `jsonc` 写，注释只是为了说明，实际配置时删掉注释。
+
+```jsonc
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/Users/yourname/.xray/access.log", // 需要确认或新增
+    "error": "/Users/yourname/.xray/error.log"    // 需要确认或新增
+  },
+  "stats": {}, // 需要新增
+  "policy": {
+    "system": {
+      "statsOutboundUplink": true,   // 需要新增
+      "statsOutboundDownlink": true  // 需要新增
+    }
+  },
+  "api": {
+    "tag": "api", // 需要新增
+    "services": [
+      "StatsService",        // 需要新增
+      "ObservatoryService"   // 需要新增
+    ]
+  },
+  "observatory": {
+    "subjectSelector": ["proxy"], // 改成你的真实 outbound tag
+    "probeUrl": "https://www.google.com/generate_204",
+    "probeInterval": "5s"
+  },
+  "inbounds": [
+    {
+      "tag": "socks-in",
+      "port": 10808,
+      "listen": "127.0.0.1",
+      "protocol": "socks",
+      "settings": {
+        "udp": true
+      }
+    },
+    {
+      "tag": "api", // 需要新增
+      "listen": "127.0.0.1", // 需要新增
+      "port": 10085, // 需要新增
+      "protocol": "dokodemo-door", // 需要新增
+      "settings": {
+        "address": "127.0.0.1" // 需要新增
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": "your-server.com",
+            "port": 443,
+            "users": [
+              {
+                "id": "00000000-0000-0000-0000-000000000000",
+                "alterId": 0
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls"
+      }
+    },
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    },
+    {
+      "protocol": "freedom",
+      "tag": "api" // 需要新增
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": ["api"], // 需要新增
+        "outboundTag": "api"   // 需要新增
+      }
+    ]
+  }
+}
+```
+
 改完先验配置：
 
 ```bash
